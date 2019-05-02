@@ -21,6 +21,8 @@ import (
 	"errors"
 	"strings"
 
+	"text/template"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -51,6 +53,11 @@ type createFunc func(cs *clientset.Clientset, upgradeResultObj *apis.UpgradeResu
 type patchFunc func(cs *clientset.Clientset, name string, pt types.PatchType, patchObj []byte,
 	namespace string) (*apis.UpgradeResult, error)
 
+// updateFunc is a typed function that abstracts
+// updating upgrade result instances
+type updateFunc func(cs *clientset.Clientset, updateObj *apis.UpgradeResult,
+	namespace string) (*apis.UpgradeResult, error)
+
 // kubeclient enables kubernetes API operations
 // on upgrade result instance
 type kubeclient struct {
@@ -65,6 +72,7 @@ type kubeclient struct {
 	get          getFunc
 	create       createFunc
 	patch        patchFunc
+	update       updateFunc
 }
 
 // kubeclientBuildOption defines the abstraction
@@ -108,6 +116,15 @@ func (k *kubeclient) withDefaults() {
 			return cs.OpenebsV1alpha1().
 				UpgradeResults(namespace).
 				Patch(name, pt, patchObj)
+		}
+	}
+	if k.update == nil {
+		k.update = func(cs *clientset.Clientset,
+			upgradeResultObj *apis.UpgradeResult,
+			namespace string) (*apis.UpgradeResult, error) {
+			return cs.OpenebsV1alpha1().
+				UpgradeResults(namespace).
+				Update(upgradeResultObj)
 		}
 	}
 }
@@ -205,4 +222,47 @@ func (k *kubeclient) Patch(name string, pt types.PatchType,
 		return nil, err
 	}
 	return k.patch(cs, name, pt, patchObj, k.namespace)
+}
+
+// Update returns the updated upgrade result instance
+func (k *kubeclient) Update(updateObj *apis.UpgradeResult) (*apis.UpgradeResult, error) {
+	cs, err := k.getClientOrCached()
+	if err != nil {
+		return nil, err
+	}
+	return k.update(cs, updateObj, k.namespace)
+}
+
+// Update is a template function exposed for
+// updating an upgrade result instance
+func Update(name, namespace, taskName, status, message string, retries int, endTime *metav1.Time) error {
+	k := &kubeclient{}
+	opts := metav1.GetOptions{}
+	k.namespace = namespace
+	ur, err := k.Get(name, opts)
+	if err != nil {
+		return err
+	}
+	tList := ur.Tasks
+	for _, task := range tList {
+		if task.Name == taskName {
+			task.Status = status
+			task.Message = message
+			task.Retries = retries
+			task.EndTime = endTime
+		}
+	}
+	_, err = k.Update(ur)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// TemplateFunctions exposes a few functions as
+// go template functions
+func TemplateFunctions() template.FuncMap {
+	return template.FuncMap{
+		"updateUpgradeResult": Update,
+	}
 }

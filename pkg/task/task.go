@@ -398,8 +398,6 @@ func (m *taskExecutor) ExecuteIt() (err error) {
 		err = m.putCStorVolume()
 	} else if m.metaTaskExec.isPutOEV1alpha1CVR() {
 		err = m.putCStorVolumeReplica()
-	} else if m.metaTaskExec.isPutOEV1alpha1UR() {
-		err = m.putUpgradeResult()
 	} else if m.metaTaskExec.isDeleteOEV1alpha1SP() {
 		err = m.deleteOEV1alpha1SP()
 	} else if m.metaTaskExec.isDeleteOEV1alpha1CSP() {
@@ -435,6 +433,9 @@ func (m *taskExecutor) ExecuteIt() (err error) {
 	} else {
 		err = fmt.Errorf("un-supported task operation: failed to execute task: '%+v'", m.metaTaskExec.getMetaInfo())
 	}
+	/*else if m.metaTaskExec.isPutOEV1alpha1UR() {
+		err = m.putUpgradeResult()
+	}*/
 
 	if err != nil {
 		return
@@ -1131,6 +1132,7 @@ func (m *taskExecutor) putCStorVolumeReplica() (err error) {
 	return
 }
 
+/*
 // putUpgradeResult will put an upgrade result as defined in the task
 func (m *taskExecutor) putUpgradeResult() (err error) {
 	uresult, err := upgraderesult.
@@ -1148,6 +1150,7 @@ func (m *taskExecutor) putUpgradeResult() (err error) {
 	util.SetNestedField(m.templateValues, uraw, string(v1alpha1.CurrentJSONResultTLP))
 	return
 }
+*/
 
 // deleteOEV1alpha1SP will delete one or more StoragePool as specified in
 // the RunTask

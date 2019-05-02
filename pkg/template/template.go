@@ -32,6 +32,7 @@ import (
 	poolselection "github.com/openebs/maya/pkg/algorithm/cstorpoolselect/v1alpha1"
 	csp "github.com/openebs/maya/pkg/cstorpool/v1alpha2"
 	v1alpha1 "github.com/openebs/maya/pkg/task/v1alpha1"
+	result "github.com/openebs/maya/pkg/upgrade/result/v1alpha1"
 	"github.com/openebs/maya/pkg/util"
 	kubever "github.com/openebs/maya/pkg/version/kubernetes"
 )
@@ -819,6 +820,10 @@ func allCustomFuncs() template.FuncMap {
 	}
 	ps := poolselection.TemplateFunctions()
 	for k, v := range ps {
+		f[k] = v
+	}
+	ur := result.TemplateFunctions()
+	for k, v := range ur {
 		f[k] = v
 	}
 	return f

@@ -19,8 +19,6 @@ package v1alpha1
 import (
 	"fmt"
 
-	"github.com/ghodss/yaml"
-	"github.com/openebs/maya/pkg/template"
 	"github.com/pkg/errors"
 
 	apis "github.com/openebs/maya/pkg/apis/openebs.io/upgrade/v1alpha1"
@@ -95,6 +93,7 @@ func (b *Builder) WithResultConfig(resource apis.ResourceDetails,
 	return b
 }
 
+/*
 // BuilderForRuntask returns a new instance
 // of Builder for runtasks
 func BuilderForRuntask(context, templateYaml string, templateValues map[string]interface{}) *Builder {
@@ -116,6 +115,7 @@ func BuilderForRuntask(context, templateYaml string, templateValues map[string]i
 	}
 	return b
 }
+*/
 
 // Build returns the final instance of upgradeResult
 func (b *Builder) Build() (*apis.UpgradeResult, error) {
