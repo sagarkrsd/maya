@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"errors"
 	"strings"
+	"time"
 
 	"text/template"
 
@@ -235,22 +236,25 @@ func (k *kubeclient) Update(updateObj *apis.UpgradeResult) (*apis.UpgradeResult,
 
 // Update is a template function exposed for
 // updating an upgrade result instance
-func Update(name, namespace, taskName, status, message string, retries int, endTime *metav1.Time) error {
+func Update(name, namespace, taskName, status, message string, retries int, endTime time.Time) error {
 	k := &kubeclient{}
 	opts := metav1.GetOptions{}
+	k.withDefaults()
 	k.namespace = namespace
 	ur, err := k.Get(name, opts)
 	if err != nil {
 		return err
 	}
-	tList := ur.Tasks
-	for _, task := range tList {
+	for i, task := range ur.Tasks {
+		i := i
+		task := task
 		if task.Name == taskName {
 			task.Status = status
 			task.Message = message
 			task.Retries = retries
-			task.EndTime = endTime
+			task.EndTime = &metav1.Time{endTime}
 		}
+		ur.Tasks[i] = task
 	}
 	_, err = k.Update(ur)
 	if err != nil {
